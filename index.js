@@ -35,29 +35,33 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 
 
+
 async function run() {
     try {
         await client.connect();
         const userCollection = client.db('user').collection('users');
-        const receiptCollection = client.db('receipts').collection('receipt');
+        const mealCollection = client.db('meals').collection('meal');
+        const payCollection = client.db('pays').collection('pay');
+        const khalaPayCollection = client.db('khalapays').collection('khalapay');
+        const bazarCollection = client.db('bazars').collection('bazar');
 
 
-             // AUTH
-             app.post('/login', async (req, res) => {
-              const user = req.body;
-              const accessToken = jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, {
-                  expiresIn: '1h'
-              });
-              res.send({ accessToken });
+        // AUTH
+        app.post('/login', async (req, res) => {
+            const user = req.body;
+            const accessToken = jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, {
+                expiresIn: '1h'
+            });
+            res.send({ accessToken });
 
-          })
+        })
 
 
 
 
 
         //get all firms list on select
-        app.get('/firm', verifyJWT, async (req, res) => {
+        app.get('/smembers', async (req, res) => {
             const query = {};
             const cursor = userCollection.find(query);
             const firms = await cursor.toArray();
@@ -66,14 +70,32 @@ async function run() {
 
         });
 
-        //get all receipt
-        app.get('/receipt', verifyJWT, async (req, res) => {
+        //get all member
+        app.get('/members', async (req, res) => {
             // const tokenInfo = req.headers.authorization;
             // const [email, accessToken] = tokenInfo?.split(" ");
             // const decoded = verifyToken(accessToken)
             // if (email === decoded.email) {
             const query = {};
-            const cursor = receiptCollection.find(query);
+            const cursor = userCollection.find(query);
+            const receipt = await cursor.toArray();
+            res.send(receipt);
+            // }
+
+            // else {
+            //   res.send({ success: 'unauthorize' })
+            // }
+
+        });
+
+        //get all meals
+        app.get('/meals', async (req, res) => {
+            // const tokenInfo = req.headers.authorization;
+            // const [email, accessToken] = tokenInfo?.split(" ");
+            // const decoded = verifyToken(accessToken)
+            // if (email === decoded.email) {
+            const query = {};
+            const cursor = mealCollection.find(query);
             const receipt = await cursor.toArray();
             res.send(receipt);
             // }
@@ -85,16 +107,17 @@ async function run() {
         });
 
 
-        //delete single receipt
-        app.delete("/receipt/:id", verifyJWT, async (req, res) => {
+
+        //delete meal
+        app.delete("/meals/:id", async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
-            const result = await receiptCollection.deleteOne(query);
+            const result = await mealCollection.deleteOne(query);
             res.send(result);
         });
 
-        //delete firm
-        app.delete("/firms/:id", async (req, res) => {
+        //delete users
+        app.delete("/users/:id", async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await userCollection.deleteOne(query);
@@ -200,10 +223,10 @@ async function run() {
         //get some by total monthly on homepage
 
 
-        app.get("/homes", verifyJWT, async (req, res) => {
+        app.get("/homes", async (req, res) => {
             const month = req.query.month;
             const query = { month: month };
-            const reports = await receiptCollection.find(query).toArray();
+            const reports = await mealCollection.find(query).toArray();
             res.send(reports);
         });
 
@@ -211,50 +234,118 @@ async function run() {
         //get some by month
 
 
-        app.get("/reports", verifyJWT, async (req, res) => {
+        app.get("/reports", async (req, res) => {
             const month = req.query.month;
             const query = { month: month };
-            const reports = await receiptCollection.find(query).toArray();
+            const reports = await mealCollection.find(query).toArray();
+            res.send(reports);
+        });
+
+
+        //get some pay by month
+
+
+        app.get("/pays", async (req, res) => {
+            const month = req.query.month;
+            const query = { month: month };
+            const reports = await userCollection.find(query).toArray();
             res.send(reports);
         });
         //get some by firmname
 
 
-        app.get("/reports/firm", async (req, res) => {
-            const firmName = req.query.firmName;
-            const query = { firmName: firmName };
-            const reports = await receiptCollection.find(query).toArray();
+        app.get("/reports/member", async (req, res) => {
+            const name = req.query.name;
+            const query = { name: name };
+            const reports = await mealCollection.find(query).toArray();
             res.send(reports);
         });
 
 
-        //get firm by select
-        app.get("/firms/firm", async (req, res) => {
-            const firmName = req.query.firmName;
-            const query = { firmName: firmName };
+        //get user by select
+        app.get("/users/user", async (req, res) => {
+            const name = req.query.name;
+            const query = { name: name };
             const firms = await userCollection.find(query).toArray();
             res.send(firms);
         });
         //add member
         app.post("/addMember", async (req, res) => {
             const newMember = req.body;
-            const tokenInfo = req.headers.authorization;
-            const [email, accessToken] = tokenInfo?.split(" ");
-            const decoded = verifyToken(accessToken)
-            if (email === decoded.email) {
+
             const result = await userCollection.insertOne(newMember);
             res.send(result);
-            }
 
-            else {
-              res.send({ success: 'unauthorize' })
-            }
+
+
         });
-        //add receipt
-        app.post("/receipt", async (req, res) => {
+
+        //add bazar pay
+        app.post("/bazar", async (req, res) => {
+            const khalaPay = req.body;
+
+            const result = await bazarCollection.insertOne(khalaPay);
+            res.send(result);
+
+
+
+        });
+        //get bazar all
+        app.get('/bazar', async (req, res) => {
+
+            const query = {};
+            const cursor = bazarCollection.find(query);
+            const receipt = await cursor.toArray();
+            res.send(receipt);
+
+
+        });
+
+
+
+
+
+
+
+
+
+
+
+        //add khala pay
+        app.post("/khalapay", async (req, res) => {
+            const khalaPay = req.body;
+
+            const result = await khalaPayCollection.insertOne(khalaPay);
+            res.send(result);
+
+
+
+        });
+        //get khala all pay
+        app.get('/khalapay', async (req, res) => {
+
+            const query = {};
+            const cursor = khalaPayCollection.find(query);
+            const receipt = await cursor.toArray();
+            res.send(receipt);
+
+
+        });
+        //add pay
+        app.put("/addPay", async (req, res) => {
+            const addpay = req.body;
+
+            const result = await payCollection.insertOne(addpay);
+            res.send(result);
+
+
+
+        });
+        //add meal
+        app.post("/meal", async (req, res) => {
             const newOrder = req.body;
 
-            const result = await receiptCollection.insertOne(newOrder);
+            const result = await mealCollection.insertOne(newOrder);
             res.send(result);
 
         });
@@ -269,7 +360,7 @@ async function run() {
         });
 
         //get single firm details
-        app.get("/firm/:id", async (req, res) => {
+        app.get("/pay/:id", async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const tools = await userCollection.findOne(query);
@@ -277,7 +368,7 @@ async function run() {
         });
 
 
-        app.put('/firm/:id', async (req, res) => {
+        app.put('/pay/:id', async (req, res) => {
             // res.send("Working")
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
